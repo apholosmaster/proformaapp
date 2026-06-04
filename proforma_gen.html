@@ -1766,7 +1766,7 @@ function newProforma() {
   document.getElementById('f-custid').value = '';
   var agSel = document.getElementById('f-agent');
   if (agSel) agSel.selectedIndex = 0;
-  document.getElementById('f-date').value = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+  var _nd = new Date(); document.getElementById('f-date').value = String(_nd.getDate()).padStart(2,'0') + '/' + String(_nd.getMonth()+1).padStart(2,'0') + '/' + _nd.getFullYear();
   document.getElementById('f-shipto-same').checked = false;
   document.getElementById('f-shipto').disabled = false;
   renderCart();
@@ -2030,7 +2030,8 @@ function loadExistingProforma() {
       var agOpt = Array.from(agSel.options).find(function(o){ return o.value === f.agent; });
       if (agOpt) agSel.value = f.agent;
     }
-    document.getElementById('f-date').value = f.date || new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    var _ld = new Date(); var _ldf = String(_ld.getDate()).padStart(2,'0') + '/' + String(_ld.getMonth()+1).padStart(2,'0') + '/' + _ld.getFullYear();
+    document.getElementById('f-date').value = f.date || _ldf;
     state.piNumber = s.piNumber || num;  // show real number in preview
     document.getElementById('pi-number-display').textContent = s.piNumber || num;
     document.getElementById('banner-pi-num').textContent = s.piNumber || num;
