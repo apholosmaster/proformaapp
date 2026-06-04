@@ -68,7 +68,7 @@
   .step-tab.done .num { background: #22c55e; color: #fff; }
 
   /* ── Main Content ── */
-  #main { flex: 1; padding: 32px 24px; max-width: 960px; margin: 0 auto; width: 100%; }
+  #main { flex: 1; padding: 32px 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
   /* ── Cards ── */
   .card {
@@ -527,7 +527,7 @@
       <div style="display:flex;gap:16px;align-items:flex-start">
 
         <!-- Left: Search (60%) -->
-        <div style="flex:65;min-width:0">
+        <div style="flex:55;min-width:0">
           <div class="card">
             <div class="card-title">🔍 Search & Add Items</div>
             <div id="search-wrap">
@@ -535,7 +535,7 @@
               <span class="filter-badge" id="filter-selected" onclick="toggleFilterSelected()">Show Selected</span>
               <span style="font-size:12px;color:#94a3b8" id="items-count"></span>
             </div>
-            <div id="items-table-wrap" style="overflow-x:auto">
+            <div id="items-table-wrap">
               <table id="items-table">
                 <thead>
                   <tr>
@@ -556,13 +556,16 @@
         </div>
 
         <!-- Right: Selected (40%) -->
-        <div style="flex:35;min-width:0;position:sticky;top:100px">
+        <div style="flex:42;min-width:0;position:sticky;top:100px">
           <div class="card" id="cart-card">
             <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">🛒 Selected <span id="cart-count" style="font-weight:400;color:#94a3b8;text-transform:none;font-size:12px"></span><button onclick="clearCart()" id="btn-clear-cart" style="display:none;font-size:11px;font-weight:600;padding:3px 10px;border-radius:5px;border:1px solid #fca5a5;background:#fff5f5;color:#ef4444;cursor:pointer">✕ Clear all</button></div>
             <div id="cart-wrap" style="max-height:60vh;overflow-y:auto">
               <div class="cart-empty" id="cart-empty">No items added yet.</div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9">
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9">
+              <button onclick="addEmptyCartRow()" style="width:100%;padding:5px;border:1px dashed #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:12px;cursor:pointer;font-weight:600">＋ Add empty row</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f1f5f9">
               <span style="font-size:12px;color:#64748b">Grand Total</span>
               <span style="font-size:15px;font-weight:700;color:#0f172a" id="cart-grand-total">$0.00</span>
             </div>
@@ -872,7 +875,10 @@ window.onload = function() {
   }
   // Set date
   var today = new Date();
-  document.getElementById('f-date').value = today.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+  var dd = String(today.getDate()).padStart(2,'0');
+  var mm = String(today.getMonth()+1).padStart(2,'0');
+  var yyyy = today.getFullYear();
+  document.getElementById('f-date').value = dd + '/' + mm + '/' + yyyy;
   // Load items
   loadItems();
   loadClients();
@@ -1068,7 +1074,14 @@ function dupCartRow(i) {
   updateSummary();
 }
 
-// ── Render Cart ───────────────────────────────────────────────────
+// ── Add empty cart row ─────────────────────────────────────────────
+function addEmptyCartRow() {
+  state.cart.push({ item: null, qty: 1, price: 0, desc: '', availableQtys: [] });
+  renderCart();
+  updateSummary();
+}
+
+
 function renderCart() {
   var wrap = document.getElementById('cart-wrap');
   var empty = document.getElementById('cart-empty');
@@ -1497,7 +1510,7 @@ function _renderPIHtml(p) {
   var applyIVA = p.applyIVA;
 
   // Items rows
-  var maxRows = isArg ? 16 : 10;
+  var maxRows = Math.max(10, p.cart.length);
   var itemRows = '';
   p.cart.forEach(function(c, i) {
     itemRows += '<tr>' +
