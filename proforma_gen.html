@@ -874,11 +874,7 @@ window.onload = function() {
     if (img) img.src = LOGOS[e];
   }
   // Set date
-  var today = new Date();
-  var dd = String(today.getDate()).padStart(2,'0');
-  var mm = String(today.getMonth()+1).padStart(2,'0');
-  var yyyy = today.getFullYear();
-  document.getElementById('f-date').value = dd + '/' + mm + '/' + yyyy;
+  document.getElementById('f-date').value = formatLongDate(new Date());
   // Load items
   loadItems();
   loadClients();
@@ -1241,10 +1237,11 @@ function selectEntity(e) {
 
 function populateAgents() {
   var sel = document.getElementById('f-agent');
-  sel.innerHTML = AGENTS_LIST.map(function(a){
+  var optionsHtml = AGENTS_LIST.map(function(a){
     var code = AGENT_CODES[a] ? a + ' [' + AGENT_CODES[a] + ']' : a;
     return '<option value="' + esc(a) + '">' + esc(code) + '</option>';
   }).join('');
+  sel.innerHTML = '<option value="" disabled selected>— Select sales rep —</option>' + optionsHtml;
 }
 
 // ── Step Navigation ───────────────────────────────────────────────
@@ -1292,6 +1289,7 @@ function stepNext() {
 function previewBeforeGenerate() {
   if (!state.entity) { toast('Select an entity first.'); return; }
   if (!state.cart.length) { toast('Add at least one item.'); return; }
+  if (!document.getElementById('f-agent').value) { toast('Please select a sales rep.'); return; }
   // Build preview with temporary number
   var tempNum = (ENTITY_DATA[state.entity]||{}).prefix + 'XXXXX';
   state.piNumber = tempNum;
@@ -1411,7 +1409,7 @@ function logProforma(num) {
     brand: document.getElementById('f-brand').value,
     shipto: document.getElementById('f-shipto').value.split('\n')[0] || '',
     custid: document.getElementById('f-custid').value,
-    originalDate: state.loadedFrom ? document.getElementById('f-date').value : ''
+    originalDate: document.getElementById('f-date').value
   };
   var qs = Object.keys(params).map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
   var cbName = '__log_' + Date.now();
@@ -1766,7 +1764,7 @@ function newProforma() {
   document.getElementById('f-custid').value = '';
   var agSel = document.getElementById('f-agent');
   if (agSel) agSel.selectedIndex = 0;
-  var _nd = new Date(); document.getElementById('f-date').value = String(_nd.getDate()).padStart(2,'0') + '/' + String(_nd.getMonth()+1).padStart(2,'0') + '/' + _nd.getFullYear();
+  document.getElementById('f-date').value = formatLongDate(new Date());
   document.getElementById('f-shipto-same').checked = false;
   document.getElementById('f-shipto').disabled = false;
   renderCart();
@@ -1832,25 +1830,19 @@ function renderProformaList(list) {
   var sorted = list.slice().sort(function(a, b) {
     var pa = parsePINumber(a.number), pb = parsePINumber(b.number);
     if (pa.base === pb.base) return pb.ver - pa.ver; // same group: version desc
-    // different group: sort by the date of the base (version 0) or latest in group
-    var aDate = a.date || '', bDate = b.date || '';
-    if (bDate > aDate) return 1;
-    if (bDate < aDate) return -1;
-    return 0;
+    return (b.dateSort || 0) - (a.dateSort || 0);
   });
   // For groups with no original, find best date per group
   var groupDate = {};
   sorted.forEach(function(p) {
     var b = parsePINumber(p.number).base;
-    if (!groupDate[b] || (p.date || '') > groupDate[b]) groupDate[b] = p.date || '';
+    if (!(b in groupDate) || (p.dateSort || 0) > groupDate[b]) groupDate[b] = p.dateSort || 0;
   });
   sorted.sort(function(a, b) {
     var pa = parsePINumber(a.number), pb = parsePINumber(b.number);
     if (pa.base === pb.base) return pb.ver - pa.ver;
-    var da = groupDate[pa.base] || '', db = groupDate[pb.base] || '';
-    if (db > da) return 1;
-    if (db < da) return -1;
-    return 0;
+    var da = groupDate[pa.base] || 0, db = groupDate[pb.base] || 0;
+    return db - da;
   });
   // Mark latest per base
   var latestSeen = {};
@@ -2030,8 +2022,7 @@ function loadExistingProforma() {
       var agOpt = Array.from(agSel.options).find(function(o){ return o.value === f.agent; });
       if (agOpt) agSel.value = f.agent;
     }
-    var _ld = new Date(); var _ldf = String(_ld.getDate()).padStart(2,'0') + '/' + String(_ld.getMonth()+1).padStart(2,'0') + '/' + _ld.getFullYear();
-    document.getElementById('f-date').value = f.date || _ldf;
+    document.getElementById('f-date').value = f.date || formatLongDate(new Date());
     state.piNumber = s.piNumber || num;  // show real number in preview
     document.getElementById('pi-number-display').textContent = s.piNumber || num;
     document.getElementById('banner-pi-num').textContent = s.piNumber || num;
@@ -2052,6 +2043,17 @@ function loadExistingProforma() {
 // ── Utils ─────────────────────────────────────────────────────────
 function esc(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// Returns "June 9th, 2026" — unambiguous, locale-independent date format
+function formatLongDate(date) {
+  date = date || new Date();
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var day = date.getDate();
+  var suffix = 'th';
+  if (day % 10 === 1 && day !== 11) suffix = 'st';
+  else if (day % 10 === 2 && day !== 12) suffix = 'nd';
+  else if (day % 10 === 3 && day !== 13) suffix = 'rd';
+  return months[date.getMonth()] + ' ' + day + suffix + ', ' + date.getFullYear();
 }
 function showLoading(msg) {
   document.getElementById('loading-msg').textContent = msg || 'Loading…';
@@ -2186,15 +2188,13 @@ function showVendorProformaList() {
     var groupDate = {};
     list.forEach(function(p) {
       var b = parsePINumber(p.number).base;
-      if (!groupDate[b] || (p.date||'') > groupDate[b]) groupDate[b] = p.date||'';
+      if (!(b in groupDate) || (p.dateSort||0) > groupDate[b]) groupDate[b] = p.dateSort||0;
     });
     list.sort(function(a, b) {
       var pa = parsePINumber(a.number), pb = parsePINumber(b.number);
       if (pa.base === pb.base) return pb.ver - pa.ver;
-      var da = groupDate[pa.base]||'', db = groupDate[pb.base]||'';
-      if (db > da) return 1;
-      if (db < da) return -1;
-      return 0;
+      var da = groupDate[pa.base]||0, db = groupDate[pb.base]||0;
+      return db - da;
     });
     var latestSeen = {};
     list.forEach(function(p) { var b = parsePINumber(p.number).base; if (!latestSeen[b]) latestSeen[b] = p.number; });
