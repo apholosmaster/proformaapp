@@ -1422,7 +1422,7 @@ function logProforma(num) {
 // ── Build PI Document ─────────────────────────────────────────────
 function _getPIParams() {
   var e  = state.entity;
-  var ed = ENTITY_DATA[e] || ENTITY_DATA['APH'];
+  var ed = ENTITY_DATA[e] || ENTITY_DATA['ARG'];
   var inco  = document.getElementById('f-incoterm').value;
   var iplace = document.getElementById('f-incoplace').value === 'other'
     ? document.getElementById('f-incoplace-custom').value
@@ -1455,8 +1455,8 @@ function _getPIParams() {
 function buildPIDocFromState(s) {
   if (!s) return '<p style="color:#ef4444">No state data.</p>';
   var f  = s.form  || {};
-  var e  = s.entity || 'APH';
-  var ed = ENTITY_DATA[e] || ENTITY_DATA['APH'];
+  var e  = s.entity || 'ARG';
+  var ed = ENTITY_DATA[e] || ENTITY_DATA['ARG'];
   var iplace = f.incoplace || '';
   return _renderPIHtml({
     entity:   e,
@@ -1486,7 +1486,7 @@ function buildPIDoc() {
 
 function _renderPIHtml(p) {
   var e  = p.entity;
-  var ed = ENTITY_DATA[e] || ENTITY_DATA['APH'];
+  var ed = ENTITY_DATA[e] || ENTITY_DATA['ARG'];
   var hc = ed.headerColor;
   var isBRP = e === 'BRP';
   var isArg = e === 'ARG';
