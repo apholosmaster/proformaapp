@@ -1918,7 +1918,9 @@ function saveProformaState(num) {
       terms:    document.getElementById('f-terms').value === 'Other' ? document.getElementById('f-terms-custom').value : document.getElementById('f-terms').value,
       agent:    document.getElementById('f-agent').value,
       date:     document.getElementById('f-date').value,
-      notes:    document.getElementById('f-notes').value
+      notes:    document.getElementById('f-notes').value,
+      currency: document.getElementById('f-currency') ? document.getElementById('f-currency').value : 'USD',
+      iva:      document.getElementById('f-iva') ? document.getElementById('f-iva').value : 'no'
     }
   };
   var json = JSON.stringify(stateData);
@@ -2022,6 +2024,10 @@ function loadExistingProforma() {
       var agOpt = Array.from(agSel.options).find(function(o){ return o.value === f.agent; });
       if (agOpt) agSel.value = f.agent;
     }
+    var currSel = document.getElementById('f-currency');
+    if (currSel) currSel.value = f.currency || 'USD';
+    var ivaSel = document.getElementById('f-iva');
+    if (ivaSel) ivaSel.value = f.iva || 'no';
     document.getElementById('f-date').value = f.date || formatLongDate(new Date());
     state.piNumber = s.piNumber || num;  // show real number in preview
     document.getElementById('pi-number-display').textContent = s.piNumber || num;
