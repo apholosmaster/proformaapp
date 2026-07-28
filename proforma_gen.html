@@ -773,7 +773,7 @@ const DATA        = {"items": [{"tipo": "ACCESSORY", "cliente": "AHASCRAGH", "de
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbxz0zAr4Fz6pw8O3ak5DS8y6d3QpEUN0DygYmCoqZQzfMaJNOZPuj_I6vVVSSmoPxEn/exec';
 
 function fmtNum(n, decimals) {
-  decimals = (decimals === undefined) ? 2 : decimals;
+  decimals = (decimals === undefined) ? 3 : decimals;
   return parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 function fmtQty(n) {
@@ -978,7 +978,7 @@ function renderItemsTable() {
   items.forEach(function(it) {
     var inCart = state.cart.some(function(c){ return c.item === it; });
     var qtys = Object.keys(it.prices || {});
-    var priceList = qtys.map(function(q){ return q + '×: $' + parseFloat(it.prices[q]).toFixed(2); }).join(' | ');
+    var priceList = qtys.map(function(q){ return q + '×: $' + parseFloat(it.prices[q]).toFixed(3); }).join(' | ');
     var imgSrc = it.img ? it.img : '';
     var realIdx = state.allItems.indexOf(it);
     var imgTag = imgSrc ? '<img class="thumb" src="' + imgSrc + '" data-fileid="' + esc(it._origFileId||'') + '" onerror="this.style.display=\'none\'">' : '<div class="thumb" style="background:#f1f5f9;border-radius:4px;width:32px;height:32px"></div>';
@@ -1029,7 +1029,7 @@ function showMoldPrompt(it, moldCost) {
   d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:7000;background:#fff;border:1px solid #fcd34d;border-radius:12px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.15);max-width:320px';
   d.innerHTML =
     '<div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">🔧 This item has a mold cost</div>' +
-    '<div style="font-size:22px;font-weight:900;color:#f97316;margin-bottom:10px">$' + moldCost.toFixed(2) + '</div>' +
+    '<div style="font-size:22px;font-weight:900;color:#f97316;margin-bottom:10px">$' + moldCost.toFixed(3) + '</div>' +
     '<div style="font-size:12px;color:#64748b;margin-bottom:12px">Include mold cost as a separate line item?</div>' +
     '<div style="display:flex;gap:8px">' +
       '<button id="mold-yes-btn" onclick="addMoldFromPrompt()" ' +
@@ -1105,7 +1105,7 @@ function renderCart() {
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<select onchange="cartQtyChange(' + i + ',this.value)" style="width:90px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px">' + qtyOpts + '</select>' +
           '<input type="number" min="0" step="1" value="' + c.qty + '" oninput="cartManualQty(' + i + ',this.value)" placeholder="qty" style="width:60px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px">' +
-          '<input type="number" min="0" step="0.01" value="' + c.price.toFixed(2) + '" oninput="cartPriceChange(' + i + ',this.value)" style="width:65px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px">' +
+          '<input type="number" min="0" step="0.001" value="' + c.price.toFixed(3) + '" oninput="cartPriceChange(' + i + ',this.value)" style="width:65px;font-size:11px;border:1px solid #e2e8f0;border-radius:4px;padding:2px 4px">' +
           '<div id="cart-row-total-' + i + '" style="margin-left:auto;font-weight:700;font-size:12px;color:#0f172a;white-space:nowrap">$' + fmtNum(c.qty * c.price) + '</div>' +
         '</div>' +
       '</div>';
@@ -1127,7 +1127,7 @@ function cartQtyChange(i, v) {
     var rows = document.querySelectorAll('.cart-row');
     if (rows[i]) {
       var priceInput = rows[i].querySelectorAll('input[type=number]')[1];
-      if (priceInput) priceInput.value = state.cart[i].price.toFixed(2);
+      if (priceInput) priceInput.value = state.cart[i].price.toFixed(3);
     }
   }
   // Sync manual qty input
@@ -1310,7 +1310,7 @@ function updateSummary() {
   document.getElementById('sb-entity').innerHTML = state.entity ? '<strong>' + (ENTITY_DATA[state.entity]||{}).name + '</strong>' : '';
   document.getElementById('sb-items').textContent = state.cart.length ? state.cart.length + ' item(s)' : '';
   var total = state.cart.reduce(function(s,c){ return s + c.qty*c.price; }, 0);
-  document.getElementById('sb-total').innerHTML = total > 0 ? '<strong>$' + total.toFixed(2) + '</strong>' : '';
+  document.getElementById('sb-total').innerHTML = total > 0 ? '<strong>$' + total.toFixed(3) + '</strong>' : '';
   document.getElementById('topbar-label').textContent = state.entity ? (ENTITY_DATA[state.entity]||{}).name : 'Select entity to begin';
   var qpBtn = document.getElementById('btn-preview-quick');
   if (qpBtn) qpBtn.style.display = (state.step === 2 || state.step === 3) && state.cart.length ? '' : 'none';
@@ -1399,7 +1399,7 @@ function logProforma(num) {
     entity: state.entity,
     client: document.getElementById('f-billto').value.split('\n')[0] || '',
     agent: document.getElementById('f-agent').value,
-    total: total.toFixed(2),
+    total: total.toFixed(3),
     items: items,
     po: document.getElementById('f-po').value,
     etd: document.getElementById('f-etd').value,
@@ -1622,7 +1622,7 @@ function _renderPIHtml(p) {
     '<div class="pi-totals">' +
       '<table>' +
         '<tr><td>Subtotal:</td><td style="text-align:right">' + currSymbol + fmtNum(total) + '</td></tr>' +
-        (applyIVA ? '<tr><td>IVA 16%:</td><td style="text-align:right">' + currSymbol + ivaAmount.toFixed(2) + '</td></tr>' : '') +
+        (applyIVA ? '<tr><td>IVA 16%:</td><td style="text-align:right">' + currSymbol + ivaAmount.toFixed(3) + '</td></tr>' : '') +
         '<tr class="grand"><td><strong>TOTAL ' + currency + ':</strong></td><td style="text-align:right"><strong>' + currSymbol + fmtNum(grandTotal) + '</strong></td></tr>' +
       '</table>' +
     '</div>' +
